@@ -2,7 +2,7 @@ import simpleaudio as sa
 import numpy as np
 import morse
 
-time_unit = 0.2
+time_unit = 0.1
 time_dot = time_unit
 time_dash = 3 * time_unit
 time_element_gap = time_unit
