@@ -1,6 +1,6 @@
 import simpleaudio as sa
 import numpy as np
-import morse
+from morse import morse_text
 
 time_unit = 0.1
 time_dot = time_unit
@@ -37,21 +37,15 @@ def morse_single_element_buffer(morse_element):
         return make_gap(time_word_gap)
 
 
-def morse_buffer(morse_phrase):
-    words = morse_phrase.split("  ")
+def morse_buffer(encoded_text):
+    words = encoded_text.split("  ")
     words = [word.strip().split(" ") for word in words if len(word.strip()) > 0]
     elements = "w".join("l".join("e".join(letter) for letter in word) for word in words)
     return np.concatenate([morse_single_element_buffer(el) for el in elements])
 
 
-def beep_morse(phrase):
-    encoded = morse.encode(phrase)
+def morse_beep(text):
+    encoded = morse_text.encode(text)
     buffer = morse_buffer(encoded)
     play = sa.play_buffer(buffer, 1, 2, sample_rate)
     play.wait_done()
-
-
-if __name__ == "__main__":
-    print("Enter phrase: ")
-    phrase = input()
-    beep_morse(phrase)
