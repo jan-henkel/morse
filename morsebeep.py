@@ -9,7 +9,7 @@ time_element_gap = time_unit
 time_letter_gap = 3 * time_unit
 time_word_gap = 7 * time_unit
 
-morse_frequency = 440  # Our played note will be 440 Hz
+morse_frequency = 700
 sample_rate = 44100
 
 
