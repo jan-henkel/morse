@@ -34,13 +34,14 @@ def decode(x):
     return " ".join("".join(word) for word in words_decoded)
 
 
-print("Enter 1 to encode, 2 to decode: ")
-mode = int(input())
-if mode == 1:
-    print("Enter phrase: ")
-    phrase = input()
-    print("Encoded:", encode(phrase))
-else:
-    print("Enter encoded phrase: ")
-    phrase = input()
-    print("Decoded:", decode(phrase))
+if __name__ == "__main__":
+    print("Enter 1 to encode, 2 to decode: ")
+    mode = int(input())
+    if mode == 1:
+        print("Enter phrase: ")
+        phrase = input()
+        print("Encoded:", encode(phrase))
+    else:
+        print("Enter encoded phrase: ")
+        phrase = input()
+        print("Decoded:", decode(phrase))
