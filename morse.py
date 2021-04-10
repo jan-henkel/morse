@@ -12,10 +12,8 @@ Y	-.--	Z	--..
 morse_table = morse_table.replace("\t", " ").replace("\n", " ").split(" ")
 characters = [c for i, c in enumerate(morse_table) if i % 2 == 0]
 codes = [c for i, c in enumerate(morse_table) if i % 2 == 1]
-morse_mapping = dict()
-inverse_morse_mapping = dict()
-morse_mapping.update(zip(characters, codes))
-inverse_morse_mapping.update(zip(codes, characters))
+morse_mapping = dict(zip(characters, codes))
+inverse_morse_mapping = dict(zip(codes, characters))
 
 
 def encode(x):
