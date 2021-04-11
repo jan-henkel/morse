@@ -50,8 +50,7 @@ def store_buffer(buffer, filename):
     wav_writer.setnchannels(1)
     wav_writer.setsampwidth(2)
     wav_writer.setframerate(sample_rate)
-    for x in buffer:
-        wav_writer.writeframesraw(struct.pack("<h", x))
+    wav_writer.writeframesraw(b"".join(buffer))
 
 
 def morse_beep(text):
