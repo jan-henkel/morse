@@ -20,4 +20,6 @@ if __name__ == "__main__":
     elif mode == 4:
         print("Enter filename: ")
         filename = input()
-        print(morse_audio_decode.soundfile_to_text(filename))
+        data = morse_audio_decode.soundfile_to_text(filename)
+        for k,v in data.items():
+            print(k+":",v)

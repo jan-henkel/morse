@@ -78,9 +78,13 @@ def signal_to_morse_text(mean_squared_amp):
     threshold = find_threshold(mean_squared_amp)
     on_off_buffer = convert_to_on_off(mean_squared_amp, threshold)
     time_unit = find_time_unit(on_off_buffer)
-    return "".join(
-        morse_element(v, duration, time_unit) for v, duration in on_off_buffer
-    )
+    return {
+        "threshold": threshold,
+        "time_unit": time_unit,
+        "morse_text": "".join(
+            morse_element(v, duration, time_unit) for v, duration in on_off_buffer
+        ).strip(),
+    }
 
 
 def soundfile_to_morse_text(filename):
@@ -89,8 +93,10 @@ def soundfile_to_morse_text(filename):
         windowed_mean_squared_amplitude(ch, rate) for ch in channels
     ]
     mean_squared_amp = np.mean(mean_squared_amp_arr, axis=0)
-    return signal_to_morse_text(mean_squared_amp).strip()
+    return signal_to_morse_text(mean_squared_amp)
 
 
 def soundfile_to_text(filename):
-    return decode(soundfile_to_morse_text(filename))
+    data = soundfile_to_morse_text(filename)
+    data["text"] = decode(data["morse_text"])
+    return data
