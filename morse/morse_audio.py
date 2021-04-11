@@ -1,6 +1,7 @@
 import simpleaudio as sa
 import numpy as np
 from morse import morse_text
+import wave, struct
 
 time_unit = 0.1
 time_dot = time_unit
@@ -42,6 +43,15 @@ def morse_buffer(encoded_text):
     words = [word.strip().split(" ") for word in words if len(word.strip()) > 0]
     elements = "w".join("l".join("e".join(letter) for letter in word) for word in words)
     return np.concatenate([morse_single_element_buffer(el) for el in elements])
+
+
+def store_buffer(buffer, filename):
+    wav_writer = wave.open(filename, "wb")
+    wav_writer.setnchannels(1)
+    wav_writer.setsampwidth(2)
+    wav_writer.setframerate(sample_rate)
+    for x in buffer:
+        wav_writer.writeframesraw(struct.pack("<h", x))
 
 
 def morse_beep(text):
