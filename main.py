@@ -1,25 +1,52 @@
-from morse import morse_text, morse_audio, morse_audio_decode
+from morse import morse_text_processing, morse_audio_encode, morse_audio_decode
+import argparse
 
-if __name__ == "__main__":
-    print(
-        "Enter 1 to encode, 2 to decode, 3 to encode and generate audio, 4 to decode audio: "
-    )
-    mode = int(input())
-    if mode == 1:
-        print("Enter text: ")
-        text = input()
-        print("Encoded:", morse_text.encode(text))
-    elif mode == 2:
-        print("Enter encoded text: ")
-        text = input()
-        print("Decoded:", morse_text.decode(text))
-    elif mode == 3:
-        print("Enter text: ")
-        text = input()
-        morse_audio.morse_beep(text)
-    elif mode == 4:
-        print("Enter filename: ")
-        filename = input()
-        data = morse_audio_decode.soundfile_to_text(filename)
-        for k,v in data.items():
-            print(k+":",v)
+parser = argparse.ArgumentParser()
+mode_group = parser.add_mutually_exclusive_group(required=True)
+mode_group.add_argument("--plaintext", help="Set plain text")
+mode_group.add_argument("--morsetext", help="Set morse text")
+mode_group.add_argument("--morseaudio", help="Set morse audio file name")
+parser.add_argument(
+    "--verbose",
+    help="Show additional information",
+    action="store_const",
+    const=True,
+    default=False,
+)
+parser.add_argument(
+    "--playaudio",
+    help="Play morse code audio",
+    action="store_const",
+    const=True,
+    default=False,
+)
+parser.add_argument("--saveaudio", help="Name of morse code audio file to be written")
+
+args = parser.parse_args()
+if args.plaintext:
+    plain_text = args.plaintext
+    morse_text = morse_text_processing.encode(args.plaintext)
+
+if args.morsetext:
+    plain_text = morse_text_processing.decode(args.morsetext)
+    morse_text = args.morsetext
+
+if args.morseaudio:
+    data = morse_audio_decode.process_soundfile(args.morseaudio)
+    plain_text = data["plain_text"]
+    morse_text = data["morse_text"]
+
+print("Plain text", plain_text)
+print("Morse text", morse_text)
+
+if args.morseaudio is None:
+    if args.playaudio or args.saveaudio:
+        audio_buffer = morse_audio_encode.morse_text_to_audio_buffer(morse_text)
+    if args.playaudio:
+        morse_audio_encode.play_audio_buffer(audio_buffer)
+    if args.saveaudio:
+        morse_audio_encode.save_audio_buffer(audio_buffer, args.saveaudio)
+
+if args.morseaudio and args.verbose:
+    print("Squared amplitude threshold", data["threshold"])
+    print("Time unit (in seconds)", data["time_unit"])

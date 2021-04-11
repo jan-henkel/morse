@@ -1,5 +1,4 @@
-from morse.morse_audio import sample_rate
-from morse.morse_text import decode
+from morse import morse_text_processing
 from itertools import groupby
 from pydub import AudioSegment
 import numpy as np
@@ -9,33 +8,32 @@ window_duration = 2 / min_frequency
 time_unit_range = (0.03, 0.3)
 time_unit_default = 0.1
 
-
-def windowed_mean_squared_amplitude(signal, signal_sample_rate):
-    samples_per_window = int(signal_sample_rate * window_duration)
-    num_windows = (np.size(signal) + samples_per_window - 1) // samples_per_window
+# returns mean squared amplitude averaged over non-overlapping windows
+def signal_to_msa_chunks(signal, rate):
+    samples_per_window = int(rate * window_duration)
+    signal_squared = np.mean(signal * signal, axis=0)
+    num_windows = int(np.ceil(np.size(signal_squared) / samples_per_window))
     padded_signal_length = num_windows * samples_per_window
-    signal_padded = np.pad(signal, (0, padded_signal_length - np.size(signal)))
-    signal_squared = signal_padded * signal_padded
-    return signal_squared.reshape(-1, samples_per_window).mean(axis=1)
+    padded = np.pad(signal_squared, (0, padded_signal_length - np.size(signal_squared)))
+    return padded.reshape(-1, samples_per_window).mean(axis=1)
 
 
-def load_file(filename):
+def load_signal(filename):
     seg = AudioSegment.from_file(filename)
     channels = seg.split_to_mono()
     samples = [s.get_array_of_samples() for s in channels]
-    arr = np.array(samples).T.astype(np.float32)
+    arr = np.array(samples).astype(np.float32)
     arr /= np.iinfo(samples[0].typecode).max
-    return arr.T, seg.frame_rate
+    return arr, seg.frame_rate
 
 
-def find_threshold(mean_squared_amp):
-    return np.mean(mean_squared_amp)
+def find_threshold(msa_chunks):
+    return np.mean(msa_chunks)
 
 
-def convert_to_on_off(mean_squard_amp, threshold):
+def msa_to_on_off(msa_chunks, threshold):
     on = [
-        (v, len(list(g)))
-        for v, g in groupby(mean_squard_amp, lambda val: val > threshold)
+        (v, len(list(g))) for v, g in groupby(msa_chunks, lambda val: val > threshold)
     ]
     return [
         (v, l * window_duration)
@@ -44,9 +42,9 @@ def convert_to_on_off(mean_squard_amp, threshold):
     ]
 
 
-def find_time_unit(on_off_buffer):
-    min_duration = min(duration for v, duration in on_off_buffer)
-    median_duration = np.median([duration for v, duration in on_off_buffer])
+def find_time_unit(on_off):
+    min_duration = min(duration for v, duration in on_off)
+    median_duration = np.median([duration for v, duration in on_off])
     result = (min_duration + median_duration) / 2
     if result >= time_unit_range[0] and result <= time_unit_range[1]:
         return result
@@ -76,29 +74,29 @@ def morse_element(value, duration, time_unit):
         return gap_element(duration, time_unit)
 
 
-def signal_to_morse_text(mean_squared_amp):
-    threshold = find_threshold(mean_squared_amp)
-    on_off_buffer = convert_to_on_off(mean_squared_amp, threshold)
-    time_unit = find_time_unit(on_off_buffer)
+def on_off_to_morse_text(on_off, time_unit):
+    return "".join(
+        morse_element(v, duration, time_unit) for v, duration in on_off
+    ).strip()
+
+
+def process_signal(signal, rate):
+    msa_chunks = signal_to_msa_chunks(signal, rate)
+    threshold = find_threshold(msa_chunks)
+    on_off = msa_to_on_off(msa_chunks, threshold)
+    time_unit = find_time_unit(on_off)
+    morse_text = on_off_to_morse_text(on_off, time_unit)
+    text = morse_text_processing.decode(morse_text)
     return {
+        "msa_chunks": msa_chunks,
+        "on_off": on_off,
         "threshold": threshold,
         "time_unit": time_unit,
-        "morse_text": "".join(
-            morse_element(v, duration, time_unit) for v, duration in on_off_buffer
-        ).strip(),
+        "morse_text": morse_text,
+        "plain_text": text,
     }
 
 
-def soundfile_to_morse_text(filename):
-    channels, rate = load_file(filename)
-    mean_squared_amp_arr = [
-        windowed_mean_squared_amplitude(ch, rate) for ch in channels
-    ]
-    mean_squared_amp = np.mean(mean_squared_amp_arr, axis=0)
-    return signal_to_morse_text(mean_squared_amp)
-
-
-def soundfile_to_text(filename):
-    data = soundfile_to_morse_text(filename)
-    data["text"] = decode(data["morse_text"])
-    return data
+def process_soundfile(filename):
+    signal, rate = load_signal(filename)
+    return process_signal(signal, rate)
