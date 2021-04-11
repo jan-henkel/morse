@@ -19,14 +19,13 @@ def windowed_mean_squared_amplitude(signal, signal_sample_rate):
     return signal_squared.reshape(-1, samples_per_window).mean(axis=1)
 
 
-def load_file(filename, rate=sample_rate):
+def load_file(filename):
     seg = AudioSegment.from_file(filename)
-    seg.set_frame_rate(rate)
     channels = seg.split_to_mono()
     samples = [s.get_array_of_samples() for s in channels]
     arr = np.array(samples).T.astype(np.float32)
     arr /= np.iinfo(samples[0].typecode).max
-    return arr.T
+    return arr.T, seg.frame_rate
 
 
 def find_threshold(mean_squared_amp):
@@ -84,8 +83,8 @@ def signal_to_morse_text(mean_squared_amp):
     )
 
 
-def soundfile_to_morse_text(filename, rate=sample_rate):
-    channels = load_file(filename, rate)
+def soundfile_to_morse_text(filename):
+    channels, rate = load_file(filename)
     mean_squared_amp_arr = [
         windowed_mean_squared_amplitude(ch, rate) for ch in channels
     ]
@@ -93,5 +92,5 @@ def soundfile_to_morse_text(filename, rate=sample_rate):
     return signal_to_morse_text(mean_squared_amp).strip()
 
 
-def soundfile_to_text(filename, rate=sample_rate):
-    return decode(soundfile_to_morse_text(filename, rate))
+def soundfile_to_text(filename):
+    return decode(soundfile_to_morse_text(filename))
