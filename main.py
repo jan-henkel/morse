@@ -3,9 +3,11 @@ import argparse
 
 parser = argparse.ArgumentParser()
 mode_group = parser.add_mutually_exclusive_group(required=True)
-mode_group.add_argument("--plaintext", help="Set plain text")
-mode_group.add_argument("--morsetext", help="Set morse text")
-mode_group.add_argument("--morseaudio", help="Set morse audio file name")
+mode_group.add_argument("--plaintext", metavar="TEXT", help="Set plain text")
+mode_group.add_argument("--morsetext", metavar="TEXT", help="Set morse text")
+mode_group.add_argument(
+    "--morseaudio", metavar="FILE", help="Set morse audio file name"
+)
 parser.add_argument(
     "--verbose",
     help="Show additional information",
@@ -20,7 +22,11 @@ parser.add_argument(
     const=True,
     default=False,
 )
-parser.add_argument("--saveaudio", help="Name of morse code audio file to be written")
+parser.add_argument(
+    "--saveaudio",
+    metavar="FILE",
+    help="Name of morse code audio file to be written",
+)
 
 args = parser.parse_args()
 if args.plaintext:
