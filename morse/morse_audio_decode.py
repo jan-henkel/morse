@@ -45,9 +45,11 @@ def convert_to_on_off(mean_squard_amp, threshold):
 
 
 def find_time_unit(on_off_buffer):
-    m = min(duration for v, duration in on_off_buffer)
-    if m >= time_unit_range[0] and m <= time_unit_range[1]:
-        return m
+    min_duration = min(duration for v, duration in on_off_buffer)
+    median_duration = np.median([duration for v, duration in on_off_buffer])
+    result = (min_duration + median_duration) / 2
+    if result >= time_unit_range[0] and result <= time_unit_range[1]:
+        return result
     return time_unit_default
 
 
